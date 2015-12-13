@@ -7,6 +7,15 @@
     font-weight: bold;
 }
 
+.color-pink   { color: #E91E63; }
+.color-purple { color: #9C27B0; }
+.color-indigo { color: #3F51B5; }
+.color-teal   { color: #009688; }
+.color-green  { color: #8BC34A; }
+.color-amber  { color: #FFC107; }
+.color-brown  { color: #795548; }
+.color-grey   { color: #607D8B; }
+
 #messageInputField {
     margin: 16px;
 }
