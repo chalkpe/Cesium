@@ -1,7 +1,7 @@
 {
   "name": "cesium",
   "version": "0.0.1",
-  "description": "",
+  "description": "Node.js powered chatting server for Shiftstudios",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
