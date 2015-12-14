@@ -1,4 +1,4 @@
-var socket = io.connect("http://shiftstudios.net:671", {
+var socket = io.connect({
     'reconnect': true, 'reconnection delay': 1000, 'max reconnection attempts': 60
 });
 
