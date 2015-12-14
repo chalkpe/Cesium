@@ -53,21 +53,90 @@ if(app.get('env') === 'development'){
 var server = http.createServer(app);
 var io = require('socket.io')(server);
 
+function getSockets(room, namespace, filter){
+    var sockets = [];
+    var namespace = io.of(namespace || '/');
+
+    if(namespace) for(var id in namespace.connected){
+        if(!room || namespace.connected[id].rooms.indexOf(room) >= 0){
+            var socket = namespace.connected[id];
+            if(!filter || filter.call(null, socket)) sockets.push(socket);
+        }
+    }
+    return sockets;
+}
+
+function getOnlineUsers(){
+    return getSockets(null, null, function(socket){
+        return socket.username !== null;
+    }).map(function(socket){
+        return { username: socket.username, address: socket.address };
+    });
+}
+
+function findOnlineUser(username){
+    return getOnlineUsers().filter(function(user){
+        return user.username === username;
+    });
+}
+
+function sendOnlineUsers(socket){
+    socket.emit('command', { what: 'online', request: (socket.lastCommand && socket.lastCommand.raw) || null, response: getOnlineUsers() });
+}
+
 io.on('connection', function(socket){
+    socket.lastTime = 0;
+    socket.username = null;
+
     socket.on('login', function(data){
-        socket.username = data.username;
-        io.emit('message join', socket.username);
+        if(data.username.trim().length === 0 || data.username === "undefined"){
+            socket.emit('login', { success: false });
+            return;
+        }
+
+        socket.username = data.username.trim();
+        socket.address = socket.request.connection.remoteAddress;
+
+        if(findOnlineUser(socket.username).length > 1) socket.username += '_';
+
+        socket.emit('login', {
+            success: true,
+            username: socket.username, address: socket.address
+        });
+        sendOnlineUsers(socket);
+
+        if(socket.username !== null) io.emit('message join', {
+            username: socket.username, address: socket.address
+        });
     });
 
     socket.on('message', function(data){
-        io.emit('message', {
-            username: socket.username,
+        if(!socket.username) return;
+        if(data.trim().length === 0) return;
+
+        var now = Date.now();
+        if(Math.abs(now - socket.lastTime) < 750) return;
+        socket.lastTime = now;
+
+        if(data.startsWith('/')){
+            var command = data.split(' ');
+            socket.lastCommand = { raw: data, command: command };
+
+            switch(command[0].toLowerCase()){
+                case '/online':
+                    sendOnlineUsers(socket);
+                    break;
+            }
+        }else io.emit('message', {
+            username: socket.username, address: socket.address,
             message: data
         });
     });
 
     socket.on('disconnect', function(){
-        socket.broadcast.emit('message left', socket.username);
+        socket.broadcast.emit('message left', {
+            username: socket.username, address: socket.address
+        });
     });
 });
 

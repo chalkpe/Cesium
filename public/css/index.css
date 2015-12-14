@@ -7,15 +7,34 @@
     font-weight: bold;
 }
 
-.color-pink   { color: #E91E63; }
+.color-red { color: #F44336; }
+.color-pink { color: #E91E63; }
 .color-purple { color: #9C27B0; }
+.color-deep-purple { color: #673AB7; }
 .color-indigo { color: #3F51B5; }
-.color-teal   { color: #009688; }
-.color-green  { color: #8BC34A; }
-.color-amber  { color: #FFC107; }
-.color-brown  { color: #795548; }
-.color-grey   { color: #607D8B; }
+.color-blue { color: #2196F3; }
+.color-light-blue { color: #03A9F4; }
+.color-cyan { color: #00BCD4; }
+.color-teal { color: #009688; }
+.color-green { color: #4CAF50; }
+.color-light-green { color: #8BC34A; }
+.color-lime { color: #CDDC39; }
+.color-yellow { color: #FFEB3B; }
+.color-amber { color: #FFC107; }
+.color-orange { color: #FF9800; }
+.color-deep-orange { color: #FF5722; }
+.color-brown { color: #795548; }
+.color-grey { color: #9E9E9E; }
+.color-blue-grey { color: #607D8B; }
 
-#messageInputField {
-    margin: 16px;
+.container {
+    margin-top: 16px;
+}
+
+.navbar {
+    padding: 8px;
+}
+
+#chatRoom li {
+    word-wrap: break-word;
 }
