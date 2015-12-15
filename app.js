@@ -38,13 +38,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', require('./routes/index'));
 
-app.use(function (req, res, next) {
+app.use(function(req, res, next){
     var err = new Error('Not Found');
     err.status = 404; next(err);
 });
 
-if (app.get('env') === 'development') {
-    app.use(function (err, req, res, next) {
+if(app.get('env') === 'development'){
+    app.use(function(err, req, res, next){
         res.status(err.status || 500);
         res.render('error', { message: err.message, error: err });
     });
@@ -53,119 +53,142 @@ if (app.get('env') === 'development') {
 var server = http.createServer(app);
 var io = require('socket.io')(server);
 
-function getSockets(room, namespace, filter) {
-    var sockets = [];
-    var namespace = io.of(namespace || '/');
+var User = require('./models/User');
+var Message = require('./models/messages/Message');
+var Command = require('./models/messages/Command');
 
-    if (namespace) for (var id in namespace.connected) {
-        if (!room || namespace.connected[id].rooms.indexOf(room) >= 0) {
-            var socket = namespace.connected[id];
-            if (!filter || filter.call(null, socket)) sockets.push(socket);
+Function.prototype.and = function(other){
+    var that = this;
+    return function(){
+        return that.apply(null, arguments) && other.apply(null, arguments);
+    }
+}
+
+var Sockets = {
+    that: {
+        is: {
+            authorized: function(socket){
+                return socket.user && socket.user.nickname;
+            },
+            equal: {
+                nickname: function(nickname){
+                    return function(socket){
+                        return socket.user.nickname === nickname;
+                    };
+                }
+            }
+        }
+    },
+    to: {
+        user: function(socket){
+            return socket.user;
+        }
+    },
+
+    get: function(room, namespace, filter, mapper){
+        var sockets = [];
+        namespace = io.of(namespace || '/');
+
+        if(namespace) for(var id in namespace.connected){
+            if(!room || namespace.connected[id].rooms.indexOf(room) >= 0){
+                var socket = namespace.connected[id];
+                if(!filter || filter.call(null, socket)) sockets.push(!mapper ? socket : mapper.call(null, socket));
+            }
+        }
+        return sockets;
+    },
+
+    getOnlineUsers: function(room, namespace){
+        return Sockets.get(room, namespace, Sockets.that.is.authorized, Sockets.to.user);
+    },
+    findOnlineUsersByNickname(nickname, room, namespace){
+        return Sockets.get(room, namespace, Sockets.that.is.authorized.and(Sockets.that.is.equal.nickname(nickname)), Sockets.to.user);
+    }
+};
+
+var Commands = {
+    emit: function(command, what, response){
+        (command.socket || command.sender.socket).emit('command', {
+            what: what || command.name || null,
+            request: command.text || null,
+            response: response || null
+        });
+    },
+
+    client: {
+        online: function(command){
+            Commands.emit(command, 'online', Sockets.getOnlineUsers());
+        },
+        clear: function(command){
+            Commands.emit(command, 'clear');
+        }
+    },
+
+    server: {
+        alertPlaster: function(command, prohibitedPeriod){
+            Commands.emit(command, 'alert plaster', prohibitedPeriod);
         }
     }
-    return sockets;
-}
+};
 
-function getOnlineUsers() {
-    return getSockets(null, null, function (socket) {
-        return socket.username !== null;
-    }).map(function (socket) {
-        return { username: socket.username, address: socket.address };
-    });
-}
-
-function findOnlineUser(username) {
-    return getOnlineUsers().filter(function (user) {
-        return user.username === username;
-    });
-}
-
-function sendOnlineUsers(socket) {
-    socket.emit('command', { what: 'online', request: (socket.lastCommand && socket.lastCommand.raw) || null, response: getOnlineUsers() });
-}
-
-function clearRoom(socket) {
-    socket.emit('command', { what: 'clear', request: (socket.lastCommand && socket.lastCommand.raw) || null});
-}
-
-var plasterCount = 0;
-var SEND_INTERVAL = 750;
-
-function sendPlasterAlert(socket, time) {
-    socket.emit('command-hidden', { what: 'alert-plaster', response: time });
-}
-
-io.on('connection', function (socket) {
-    socket.lastTime = 0;
-    socket.username = null;
-
-    socket.on('login', function (data) {
-        if (data.username.trim().length === 0 || data.username === "undefined") {
+io.on('connection', function(socket){
+    socket.on('login', function(data){
+        if(!data.nickname || data.nickname.trim().length === 0 || data.nickname === "undefined"){
             socket.emit('login', { success: false });
             return;
         }
 
-        socket.username = data.username.trim();
-        socket.address = socket.request.connection.remoteAddress;
+        var nickname = data.nickname.trim();
+        if(Sockets.findOnlineUsersByNickname(nickname).length > 0) nickname += '_';
 
-        // 닉 중복 처리
-        if (findOnlineUser(socket.username).length > 1) socket.username += '_';
+        socket.user = new User({ socket: socket, nickname: nickname });
+        socket.emit('login', { success: true, user: socket.user });
+        Commands.client.online(socket.user);
 
-        socket.emit('login', {
-            success: true,
-            username: socket.username, address: socket.address
-        });
-        sendOnlineUsers(socket);
-
-        if (socket.username !== null) io.emit('message join', {
-            username: socket.username, address: socket.address
-        });
+        io.emit('user join', socket.user);
     });
 
-    socket.on('message', function (data) {
-        if (!socket.username) return;
+    socket.on('message', function(data){
+        if(!socket.user) return;
+        data.sender = socket.user;
 
         // 내용이 없는 경우 전송 안함
-        if (data.trim().length === 0) return;
+        if(!data.text || data.text.trim().length === 0) return;
 
         // 도배 방지
-        var now = Date.now();
-        var elaspedTime = Math.abs(now - socket.lastTime);
-        var limitInterval = SEND_INTERVAL + 400 * plasterCount;
-        if (elaspedTime < limitInterval) {
-            plasterCount++;
-            sendPlasterAlert(socket, SEND_INTERVAL + 400 * plasterCount - elaspedTime);
-            return;
-        }
-        socket.lastTime = now;
-        plasterCount = 0;
+        var elapsedTime = Math.abs(Date.now() - ((socket.user.lastMessage && socket.user.lastMessage.date) || 0));
+        var limitInterval = Message.MIN_SENDING_INTERVAL + Message.PROHIBITION_PERIOD * socket.user.plasteredCount;
 
-        // 커맨드 처리
-        if (data.startsWith('/')) {
-            var command = data.split(' ');
-            socket.lastCommand = { raw: data, command: command };
+        if(elapsedTime < limitInterval){
+            if(++socket.user.plasteredCount > 5){
+                Commands.server.alertPlaster(socket.user, Message.MIN_SENDING_INTERVAL + Message.PROHIBITION_PERIOD * socket.user.plasteredCount - elapsedTime);
+                return;
+            }
+        }else socket.user.plasteredCount = 0;
 
-            switch (command[0].toLowerCase()) {
-                case '/online':
-                    sendOnlineUsers(socket);
+        // 명령어 처리
+        if(data.text.startsWith('/')){
+            var command = socket.user.lastCommand = new Command(data);
+            switch(command.name.toLowerCase()){
+                case 'online':
+                    Commands.client.online(command);
                     break;
-                case '/clear':
-                    clearRoom(socket);
+                case 'clear':
+                    Commands.client.clear(command);
+                    break;
+
+                default:
+                    Commands.emit(command, 'invalid');
                     break;
             }
-        } else io.emit('message', {
-            username: socket.username, address: socket.address,
-            message: data
-        });
+        }else io.emit('message', socket.user.lastMessage = new Message(data));
     });
 
-    socket.on('disconnect', function () {
-        socket.broadcast.emit('message left', {
-            username: socket.username, address: socket.address
-        });
+    socket.on('disconnect', function(){
+        socket.broadcast.emit('user left', socket.user);
     });
 });
 
-server.listen(app.get('port'), function () {
+server.listen(app.get('port'), function(){
     console.log('Listening on port ' + app.get('port'));
 });

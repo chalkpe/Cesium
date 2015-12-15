@@ -7,6 +7,11 @@
     font-weight: bold;
 }
 
+.date {
+    float: right;
+    font-weight: bold;
+}
+
 .color-red { color: #F44336; }
 .color-pink { color: #E91E63; }
 .color-purple { color: #9C27B0; }
@@ -33,6 +38,16 @@
 
 .navbar {
     padding: 8px;
+}
+
+.col-less-padding {
+    padding-left: 0px;
+    padding-right: 8px;
+}
+
+.col-less-padding:last-child {
+    padding-left: 0px;
+    padding-right: 0px;
 }
 
 #chatRoom li {
