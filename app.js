@@ -38,13 +38,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', require('./routes/index'));
 
-app.use(function(req, res, next){
+app.use(function (req, res, next) {
     var err = new Error('Not Found');
     err.status = 404; next(err);
 });
 
-if(app.get('env') === 'development'){
-    app.use(function(err, req, res, next){
+if (app.get('env') === 'development') {
+    app.use(function (err, req, res, next) {
         res.status(err.status || 500);
         res.render('error', { message: err.message, error: err });
     });
@@ -53,43 +53,54 @@ if(app.get('env') === 'development'){
 var server = http.createServer(app);
 var io = require('socket.io')(server);
 
-function getSockets(room, namespace, filter){
+function getSockets(room, namespace, filter) {
     var sockets = [];
     var namespace = io.of(namespace || '/');
 
-    if(namespace) for(var id in namespace.connected){
-        if(!room || namespace.connected[id].rooms.indexOf(room) >= 0){
+    if (namespace) for (var id in namespace.connected) {
+        if (!room || namespace.connected[id].rooms.indexOf(room) >= 0) {
             var socket = namespace.connected[id];
-            if(!filter || filter.call(null, socket)) sockets.push(socket);
+            if (!filter || filter.call(null, socket)) sockets.push(socket);
         }
     }
     return sockets;
 }
 
-function getOnlineUsers(){
-    return getSockets(null, null, function(socket){
+function getOnlineUsers() {
+    return getSockets(null, null, function (socket) {
         return socket.username !== null;
-    }).map(function(socket){
+    }).map(function (socket) {
         return { username: socket.username, address: socket.address };
     });
 }
 
-function findOnlineUser(username){
-    return getOnlineUsers().filter(function(user){
+function findOnlineUser(username) {
+    return getOnlineUsers().filter(function (user) {
         return user.username === username;
     });
 }
 
-function sendOnlineUsers(socket){
+function sendOnlineUsers(socket) {
     socket.emit('command', { what: 'online', request: (socket.lastCommand && socket.lastCommand.raw) || null, response: getOnlineUsers() });
 }
 
-io.on('connection', function(socket){
+function clearRoom(socket) {
+    socket.emit('command', { what: 'clear', request: (socket.lastCommand && socket.lastCommand.raw) || null});
+}
+
+var plasterCount = 0;
+var SEND_INTERVAL = 750;
+
+function sendPlasterAlert(socket, time) {
+    socket.emit('command-hidden', { what: 'alert-plaster', response: time });
+}
+
+io.on('connection', function (socket) {
     socket.lastTime = 0;
     socket.username = null;
 
-    socket.on('login', function(data){
-        if(data.username.trim().length === 0 || data.username === "undefined"){
+    socket.on('login', function (data) {
+        if (data.username.trim().length === 0 || data.username === "undefined") {
             socket.emit('login', { success: false });
             return;
         }
@@ -97,7 +108,8 @@ io.on('connection', function(socket){
         socket.username = data.username.trim();
         socket.address = socket.request.connection.remoteAddress;
 
-        if(findOnlineUser(socket.username).length > 1) socket.username += '_';
+        // 닉 중복 처리
+        if (findOnlineUser(socket.username).length > 1) socket.username += '_';
 
         socket.emit('login', {
             success: true,
@@ -105,41 +117,55 @@ io.on('connection', function(socket){
         });
         sendOnlineUsers(socket);
 
-        if(socket.username !== null) io.emit('message join', {
+        if (socket.username !== null) io.emit('message join', {
             username: socket.username, address: socket.address
         });
     });
 
-    socket.on('message', function(data){
-        if(!socket.username) return;
-        if(data.trim().length === 0) return;
+    socket.on('message', function (data) {
+        if (!socket.username) return;
 
+        // 내용이 없는 경우 전송 안함
+        if (data.trim().length === 0) return;
+
+        // 도배 방지
         var now = Date.now();
-        if(Math.abs(now - socket.lastTime) < 750) return;
+        var elaspedTime = Math.abs(now - socket.lastTime);
+        var limitInterval = SEND_INTERVAL + 400 * plasterCount;
+        if (elaspedTime < limitInterval) {
+            plasterCount++;
+            sendPlasterAlert(socket, SEND_INTERVAL + 400 * plasterCount - elaspedTime);
+            return;
+        }
         socket.lastTime = now;
+        plasterCount = 0;
 
-        if(data.startsWith('/')){
+        // 커맨드 처리
+        if (data.startsWith('/')) {
             var command = data.split(' ');
             socket.lastCommand = { raw: data, command: command };
 
-            switch(command[0].toLowerCase()){
+            switch (command[0].toLowerCase()) {
                 case '/online':
                     sendOnlineUsers(socket);
                     break;
+                case '/clear':
+                    clearRoom(socket);
+                    break;
             }
-        }else io.emit('message', {
+        } else io.emit('message', {
             username: socket.username, address: socket.address,
             message: data
         });
     });
 
-    socket.on('disconnect', function(){
+    socket.on('disconnect', function () {
         socket.broadcast.emit('message left', {
             username: socket.username, address: socket.address
         });
     });
 });
 
-server.listen(app.get('port'), function(){
+server.listen(app.get('port'), function () {
     console.log('Listening on port ' + app.get('port'));
 });
