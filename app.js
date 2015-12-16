@@ -163,7 +163,7 @@ io.on('connection', function(socket){
         var limitInterval = Message.MIN_SENDING_INTERVAL + Message.PROHIBITION_PERIOD * socket.user.plasteredCount;
 
         if(elapsedTime < limitInterval){
-            if(++socket.user.plasteredCount > 5){
+            if(++socket.user.plasteredCount > 3){
                 Commands.server.alertPlaster(socket.user, Message.MIN_SENDING_INTERVAL + Message.PROHIBITION_PERIOD * socket.user.plasteredCount - elapsedTime);
                 return;
             }

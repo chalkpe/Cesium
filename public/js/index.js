@@ -59,6 +59,10 @@ var colors = shuffleArray([
     "blue-grey"
 ]);
 
+function escape(text){
+    return $('<span>').text(text).html();
+}
+
 // 챗방 메시지 목록에 메시지 축가
 function appendMessage(text, otherClasses){
     $("#chatRoom").append('<li class="list-group-item' + (otherClasses || '') + '">' + text + '</li>').find('[data-toggle="tooltip"]').tooltip();
@@ -66,7 +70,7 @@ function appendMessage(text, otherClasses){
 };
 
 function createUserSpan(user){
-    return !user ? '' : '<span data-toggle="tooltip" class="username color-' + colors[Math.abs(hashCode(user.nickname)) % colors.length] + '" title="' + user.address + '">' + user.nickname + '</span>';
+    return !user ? '' : '<span data-toggle="tooltip" class="username color-' + colors[Math.abs(hashCode(user.nickname)) % colors.length] + '" title="' + user.address + '">' + escape(user.nickname) + '</span>';
 }
 
 function createDateSpan(date){
@@ -75,7 +79,7 @@ function createDateSpan(date){
 
 // 메시지를 수신할 경우
 function onMessage(message){
-    appendMessage(createUserSpan(message.sender) + ' ' + $('<span>').text(message.text).html() + ' ' + createDateSpan(message.date));
+    appendMessage(createUserSpan(message.sender) + ' ' + escape(message.text) + ' ' + createDateSpan(message.date));
 }
 
 // 입장 메시지를 수신하는 경우
