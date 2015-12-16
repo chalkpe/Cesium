@@ -136,7 +136,7 @@ io.on('connection', function(socket){
             return;
         }
 
-        if(!data.nickname || data.nickname.trim().length === 0 || data.nickname.trim().length > 20){
+        if(!data.nickname || data.nickname.trim().length === 0 || data.nickname.trim().length > 20 || /^\s*$/.test(data.nickname)){
             socket.emit('login', { success: false });
             return;
         }
