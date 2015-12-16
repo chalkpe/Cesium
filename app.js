@@ -133,7 +133,12 @@ var Commands = {
 
 io.on('connection', function(socket){
     socket.on('login', function(data){
-        if(!data.nickname || data.nickname.trim().length === 0 || data.nickname === "undefined"){
+        if(socket.user){
+            socket.emit('login', { success: true, done: true });
+            return;
+        }
+
+        if(!data.nickname || data.nickname.trim().length === 0 || data.nickname.trim().length > 32){
             socket.emit('login', { success: false });
             return;
         }
@@ -185,6 +190,7 @@ io.on('connection', function(socket){
     });
 
     socket.on('disconnect', function(){
+        if(!socket.user) return;
         socket.broadcast.emit('user left', socket.user);
     });
 });

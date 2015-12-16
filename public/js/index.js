@@ -1,19 +1,20 @@
 var socket = io.connect({
+    'port': 671, 'force new connection': true,
     'reconnect': true, 'reconnection delay': 1000, 'max reconnection attempts': 60
 });
 
-// 닉네임 설정
-var nickname = (prompt("닉네임을 입력해 주세요!") || ('user' + Math.floor(1000 + Math.random() * 9000))).trim();
+var nickname = null;
 var me = null;
 
 socket.on('connect', function(){
-    socket.emit('login', { nickname: nickname });
+    if(nickname) socket.emit('login', { nickname: nickname });
 });
 
 socket.on('login', function(data){
     if(!data.success){
-        appendMessage("잘못된 닉네임입니다. 페이지를 새로고침하세요.", ' list-group-item-danger');
-        $("#messageInputField *").prop('disabled', true);
+        appendMessage("잘못된 닉네임입니다.", ' list-group-item-danger');
+        $("#nicknameModal").modal('show');
+        return;
     }
 
     me = data.user;
@@ -91,12 +92,12 @@ socket.on('user left', onUserLeft);
 // 메시지를 발신하는 경우
 function sendMessage(){
     var text = $("#messageInput").val();
-    if (text) {
+    if(text){
         socket.emit('message', { text: text });
-
         $("#messageInput").val('');
-        $("#messageInput").focus();
     }
+
+    $("#messageInput").focus();
 }
 
 socket.on('disconnect', function(){
@@ -107,7 +108,7 @@ socket.on('reconnecting', function(){
     appendMessage("재연결을 시도하는 중입니다….", ' list-group-item-warning');
 })
 
-// 커맨드를 전송하는 경우
+// 명령를 전송하는 경우
 socket.on('command', function(data){
     if(data.request) appendMessage(createUserSpan(me) + ' ' + data.request, ' disabled');
 
@@ -130,7 +131,7 @@ socket.on('command', function(data){
 
         case 'alert plaster':
             // 채팅금지 시간 전송 (도배)
-            appendMessage("반복적인 메시지 전송으로 " + (data.response / 1000).toFixed(1).toString() + "초 동안 채팅이 금지되어 있습니다.", ' disabled');
+            appendMessage("반복적인 메시지 전송으로 " + (data.response / 1000).toFixed(1).toString() + "초 동안 채팅이 차단되어 있습니다.", ' disabled');
             break;
     }
 })
@@ -154,7 +155,22 @@ $(function(){
         $(".container").css('padding-bottom', ($(".navbar-fixed-bottom").outerHeight() + 16) + "px");
     } resize(); $(window).resize(resize);
 
-    $("html, body").on("scroll mousedown wheel DOMMouseScroll mousewheel keyup touchmove", function(){
+    $("html, body").on('scroll mousedown wheel DOMMouseScroll mousewheel touchmove', function(){
         $("html, body").stop();
     });
+
+
+    $("#nicknameInput").attr('placeholder', "user" + Math.floor(1000 + 9000 * Math.random()));
+    $("#nicknameInput").keydown(function(e){
+        if(e.keyCode === 13) $("#nicknameSendButton").click();
+    });
+
+    $("#nicknameModal").on('shown.bs.modal', function(e){
+        $("#nicknameInput").focus();
+    }).on('hide.bs.modal', function(e){
+        var val = $("#nicknameInput").val();
+        if(!val || val.trim().length === 0) val = $("#nicknameInput").attr('placeholder');
+
+        socket.emit('login', { nickname: nickname = val });
+    }).modal('show');
 });

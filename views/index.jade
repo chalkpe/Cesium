@@ -5,10 +5,10 @@ block stylesheets
 
 block content
     nav.navbar.navbar-default.navbar-fixed-bottom
-        .col-less-padding.col-xs-3.col-md-offset-2.col-md-1
+        .col-less-padding.col-xs-2.col-md-offset-2.col-md-1
             button#lockScrollButton.btn.btn-lg.btn-default.btn-block
                 span.glyphicon.glyphicon-pushpin
-        .col-less-padding.col-xs-9.col-md-7
+        .col-less-padding.col-xs-10.col-md-7
             #messageInputField.input-group
                 input#messageInput.form-control.input-lg(type='text', autocomplete='off', placeholder='Message')
                 span.input-group-btn
@@ -18,10 +18,20 @@ block content
         .row
             .col-xs-12.col-xs-offset-0.col-md-10.col-md-offset-1
                 ul#chatRoom.list-group
-                    li.list-group-item= title
-                        | &nbsp;(
-                        a(href='#{repo}/commit/#{hash}')= hash.substring(0, 7)
+                    li.list-group-item= title + ' ' + version + ' ('
+                        a(href='//#{repo}/commit/#{hash}')= hash.substring(0, 7)
                         | )
+                        
+    #nicknameModal.modal.fade(role='dialog', tabindex='-1')
+        .modal-dialog
+            .modal-content
+                .modal-header
+                    h4.modal-title What's your nickname?
+                .modal-body
+                    input#nicknameInput.input-lg.form-control(type='text', autocomplete='off', placeholder='Nickname')
+                .modal-footer
+                    button#nicknameSendButton.btn.btn-primary(data-dismiss='modal') Start
+                
 
 block scripts
     script(src='/js/index.js')
