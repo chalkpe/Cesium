@@ -144,6 +144,8 @@ function scrollToBottom(){
 }
 
 $(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+
     $("button#messageSendButton").click(sendMessage);
     $("input#messageInput").keydown(function(e){
         if(e.keyCode === 13) sendMessage();
