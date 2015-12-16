@@ -69,14 +69,12 @@ var Sockets = {
         is: {
             authorized: function(socket){
                 return socket.user && socket.user.nickname;
-            },
-            equal: {
-                nickname: function(nickname){
-                    return function(socket){
-                        return socket.user.nickname === nickname;
-                    };
-                }
             }
+        },
+        has: function(key, value){
+            return function(socket){
+                return socket.user[key] === value;
+            };
         }
     },
     to: {
@@ -102,7 +100,7 @@ var Sockets = {
         return Sockets.get(room, namespace, Sockets.that.is.authorized, Sockets.to.user);
     },
     findOnlineUsersByNickname(nickname, room, namespace){
-        return Sockets.get(room, namespace, Sockets.that.is.authorized.and(Sockets.that.is.equal.nickname(nickname)), Sockets.to.user);
+        return Sockets.get(room, namespace, Sockets.that.is.authorized.and(Sockets.that.has('nickname', nickname)), Sockets.to.user);
     }
 };
 
@@ -138,7 +136,7 @@ io.on('connection', function(socket){
             return;
         }
 
-        if(!data.nickname || data.nickname.trim().length === 0 || data.nickname.trim().length > 32){
+        if(!data.nickname || data.nickname.trim().length === 0 || data.nickname.trim().length > 20){
             socket.emit('login', { success: false });
             return;
         }

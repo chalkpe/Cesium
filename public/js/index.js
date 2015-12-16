@@ -13,7 +13,10 @@ socket.on('connect', function(){
 socket.on('login', function(data){
     if(!data.success){
         appendMessage("잘못된 닉네임입니다.", ' list-group-item-danger');
-        $("#nicknameModal").modal('show');
+        $("#nicknameModal").on('hidden.bs.modal', function(e){
+            $(this).modal('show');
+            $(this).off('hidden.bs.modal');
+        });
         return;
     }
 
