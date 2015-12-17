@@ -22,17 +22,22 @@ block content
                         a(href='//#{repo}/commit/#{hash}')= hash.substring(0, 7)
                         | )
                         
-    #nicknameModal.modal.fade(role='dialog', tabindex='-1')
+    #nicknameModal.modal.fade(role='dialog', tabindex='-1' data-backdrop='static' data-keyboard='false')
         .modal-dialog
             .modal-content
                 .modal-header
                     h4.modal-title What's your nickname?
                 .modal-body
-                    input#nicknameInput.input-lg.form-control(type='text', autocomplete='off', maxlength='20' placeholder='Nickname')
+                    .form-group.has-feedback
+                        .input-group
+                            span.input-group-addon @
+                            input#nicknameInput.input-lg.form-control(type='text', autocomplete='off', maxlength='20' pattern='^[A-Za-z0-9-_. ㄱ-ㅎㅏ-ㅣ가-힣]{1,20}$' placeholder='Nickname')
+                        .help-block.with-errors Default nickname is a temporary
                 .modal-footer
-                    button#nicknameSendButton.btn.btn-primary(data-dismiss='modal') Start
+                    button#nicknameSendButton.btn.btn-primary Start
                 
 
 block scripts
     script(src='/js/index.js')
     script(src='//cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js')
+    script(src='/lib/bootstrap-validator/dist/validator.min.js')

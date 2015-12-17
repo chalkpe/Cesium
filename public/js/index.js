@@ -12,16 +12,13 @@ socket.on('connect', function(){
 
 socket.on('login', function(data){
     if(!data.success){
-        appendMessage("잘못된 닉네임입니다.", ' list-group-item-danger');
-        $("#nicknameModal").on('hidden.bs.modal', function(e){
-            $(this).modal('show');
-            $(this).off('hidden.bs.modal');
-        });
+        $("#nicknameInput").attr('reason', data.reason);
+        $("#nicknameInput").validator('validate');
         return;
     }
 
-    me = data.user;
-    appendMessage(createUserSpan(me) + "님, 안녕하세요!", ' disabled');
+    $("#nicknameModal").modal('hide');
+    appendMessage(createUserSpan(me = data.user) + "님, 안녕하세요!", ' disabled');
     $("#messageInput").focus();
 });
 
@@ -168,18 +165,34 @@ $(function(){
         $("html, body").stop();
     });
 
-
-    $("#nicknameInput").attr('placeholder', "user" + Math.floor(1000 + 9000 * Math.random()));
-    $("#nicknameInput").keydown(function(e){
-        if(e.keyCode === 13) $("#nicknameSendButton").click();
+    var custom = {};
+    ['empty', 'too-long', 'wrong-format', 'duplicate'].forEach(function(key){
+        custom[key] = function(){ return $("#nicknameInput").attr('reason') !== key; };
     });
 
-    $("#nicknameModal").on('shown.bs.modal', function(e){
-        $("#nicknameInput").focus();
-    }).on('hide.bs.modal', function(e){
+    $("#nicknameInput").validator({
+        delay: 0,
+        custom: custom,
+        errors: {
+            'empty': 'The nickname is empty.',
+            'too-long': 'The nickname is too long.',
+            'wrong-format': 'Invalid format.',
+            'duplicate': 'The nickname is already in use.'
+        }
+    });
+
+    $("#nicknameInput").attr('placeholder', "user" + Math.floor(1000 + 9000 * Math.random())).keydown(function(e){
+        if(e.keyCode === 13) $("#nicknameSendButton").click();
+    })
+
+    $("#nicknameSendButton").click(function(){
         var val = $("#nicknameInput").val();
         if(!val || val.trim().length === 0) val = $("#nicknameInput").attr('placeholder');
 
         socket.emit('login', { nickname: nickname = val });
+    });
+
+    $("#nicknameModal").on('shown.bs.modal', function(e){
+        $("#nicknameInput").focus();
     }).modal('show');
 });

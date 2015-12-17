@@ -136,15 +136,35 @@ io.on('connection', function(socket){
             return;
         }
 
-        if(!data.nickname || data.nickname.trim().length === 0 || data.nickname.trim().length > 20 || /^\s*$/.test(data.nickname)){
-            socket.emit('login', { success: false });
-            return;
+        if(!data.nickname || (data.nickname = data.nickname.trim()).length === 0){
+            socket.emit('login', {
+                success: false,
+                reason: "empty"
+            }); return;
         }
 
-        var nickname = data.nickname.trim();
-        if(Sockets.findOnlineUsersByNickname(nickname).length > 0) nickname += '_';
+        if(data.nickname.length > 20){
+            socket.emit('login', {
+                success: false,
+                reason: 'too-long'
+            }); return;
+        }
 
-        socket.user = new User({ socket: socket, nickname: nickname });
+        if(!/^[A-Za-z0-9-_. ㄱ-ㅎㅏ-ㅣ가-힣]{1,20}$/.test(data.nickname)){
+            socket.emit('login', {
+                success: false,
+                reason: 'wrong-format'
+            }); return;
+        }
+
+        if(Sockets.findOnlineUsersByNickname(data.nickname).length > 0){
+            socket.emit('login', {
+                success: false,
+                reason: 'duplicate'
+            }); return;
+        }
+
+        socket.user = new User({ socket: socket, nickname: data.nickname });
         socket.emit('login', { success: true, user: socket.user });
         Commands.client.online(socket.user);
 
