@@ -28,11 +28,10 @@ block content
                 .modal-header
                     h4.modal-title What's your nickname?
                 .modal-body
-                    .form-group.has-feedback
+                    #nicknameFormGroup.form-group.has-feedback
                         .input-group
                             span.input-group-addon @
-                            input#nicknameInput.input-lg.form-control(type='text', autocomplete='off', maxlength='20' pattern='^[A-Za-z0-9-_. ㄱ-ㅎㅏ-ㅣ가-힣]{1,20}$' placeholder='Nickname')
-                        .help-block.with-errors Default nickname is a temporary
+                            input#nicknameInput.input-lg.form-control(type='text', autocomplete='off', maxlength='20' pattern='^[A-Za-z0-9-_. ㄱ-ㅎㅏ-ㅣ가-힣]{1,20}$' placeholder='Nickname', data-toggle='tooltip')
                 .modal-footer
                     button#nicknameSendButton.btn.btn-primary Start
                 

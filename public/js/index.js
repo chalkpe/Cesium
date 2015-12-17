@@ -10,10 +10,17 @@ socket.on('connect', function(){
     if(nickname) socket.emit('login', { nickname: nickname });
 });
 
+var reasons = {
+    'empty': "The nickname is empty",
+    'too-long': "The nickname is too long",
+    'wrong-format': "Invalid format",
+    'duplicate': "The nickname is already in use"
+};
+
 socket.on('login', function(data){
     if(!data.success){
-        $("#nicknameInput").attr('reason', data.reason);
-        $("#nicknameInput").validator('validate');
+        $("#nicknameFormGroup").addClass('has-error');
+        $("#nicknameInput").attr('data-original-title', reasons[data.reason]).tooltip('show');
         return;
     }
 
@@ -165,25 +172,11 @@ $(function(){
         $("html, body").stop();
     });
 
-    var custom = {};
-    ['empty', 'too-long', 'wrong-format', 'duplicate'].forEach(function(key){
-        custom[key] = function(){ return $("#nicknameInput").attr('reason') !== key; };
-    });
-
-    $("#nicknameInput").validator({
-        delay: 0,
-        custom: custom,
-        errors: {
-            'empty': 'The nickname is empty.',
-            'too-long': 'The nickname is too long.',
-            'wrong-format': 'Invalid format.',
-            'duplicate': 'The nickname is already in use.'
-        }
-    });
-
     $("#nicknameInput").attr('placeholder', "user" + Math.floor(1000 + 9000 * Math.random())).keydown(function(e){
         if(e.keyCode === 13) $("#nicknameSendButton").click();
-    })
+    }).on('validate.bs.validator', function(){
+        $("#nicknameInput").tooltip('hide').tooltip('destroy');
+    }).validator({ delay: 0 });
 
     $("#nicknameSendButton").click(function(){
         var val = $("#nicknameInput").val();
