@@ -29,6 +29,7 @@ socket.on('connect', function(){
 
 var reasons = {
     'empty': "The nickname is empty",
+    'too-short': "The nickname is too short",
     'too-long': "The nickname is too long",
     'wrong-format': "Invalid format",
     'duplicate': "The nickname is already in use"

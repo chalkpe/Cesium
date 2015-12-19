@@ -143,6 +143,13 @@ io.on('connection', function(socket){
             }); return;
         }
 
+        if(data.nickname.length < 2){
+            socket.emit('login', {
+                success: false,
+                reason: 'too-short'
+            }); return;
+        }
+
         if(data.nickname.length > 20){
             socket.emit('login', {
                 success: false,
@@ -150,7 +157,7 @@ io.on('connection', function(socket){
             }); return;
         }
 
-        if(!/^[A-Za-z0-9-_. ㄱ-ㅎㅏ-ㅣ가-힣]{1,20}$/.test(data.nickname)){
+        if(!/^[A-Za-z0-9-_. ㄱ-ㅎㅏ-ㅣ가-힣]{2,20}$/.test(data.nickname)){
             socket.emit('login', {
                 success: false,
                 reason: 'wrong-format'
