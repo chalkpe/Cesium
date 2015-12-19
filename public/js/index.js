@@ -42,7 +42,7 @@ socket.on('login', function(data){
     }
 
     $("#nicknameModal").modal('hide');
-    appendMessage(createUserSpan(me = data.user) + "님, 안녕하세요!", ' disabled');
+    appendMessage(createUserSpan(me = data.user) + "님, 안녕하세요!", ['disabled']);
     $("#messageInput").focus();
 });
 
@@ -80,13 +80,17 @@ var colors = shuffleArray([
     "blue-grey"
 ]);
 
+$.fn.toHTML = function(element){
+    return $('<span>').append(this.clone()).html();
+};
+
 function escape(text){
     return $('<span>').text(text).html();
 }
 
 // 챗방 메시지 목록에 메시지 축가
 function appendMessage(text, otherClasses){
-    $("#chatRoom").append($('<li>'),addClass("list-group-item" + ((otherClasses && (' ' + otherClasses.join(' '))) || '')).html(text)).find('[data-toggle="tooltip"]').tooltip();
+    $("#chatRoom").append($('<li>').addClass("list-group-item" + ((otherClasses && (' ' + otherClasses.join(' '))) || '')).html(text)).find('[data-toggle="tooltip"]').tooltip();
     if(!$("button#lockScrollButton").hasClass('active')) scrollToBottom();
 }
 
@@ -94,14 +98,14 @@ function createUserSpan(user){
     return !user ? '' : $('<span>').addClass("username").addClass("color-" + colors[Math.abs(hashCode(user.nickname)) % colors.length]).attr({
         'data-toggle': 'tooltip',
         'title': user.address
-    }).text(user.nickname).html();
+    }).text(user.nickname).toHTML();
 }
 
 function createDateSpan(date){
-    return !data ? '' : $('<span>').addClass("date color-grey")attr({
+    return !date ? '' : $('<span>').addClass("date color-grey").attr({
         'data-toggle': 'tooltip',
         'title': moment(date).format('YYYY-MM-DD HH:mm:ss')
-    }).text(moment(date).format("HH:mm")).html();
+    }).text(moment(date).format("HH:mm")).toHTML();
 }
 
 // 메시지를 수신할 경우
@@ -135,11 +139,11 @@ function sendMessage(){
 }
 
 socket.on('disconnect', function(){
-    appendMessage("이런, 서버와의 연결이 끊겼습니다.", ' list-group-item-warning');
+    appendMessage("이런, 서버와의 연결이 끊겼습니다.", ['list-group-item-warning']);
 });
 
 socket.on('reconnecting', function(){
-    appendMessage("재연결을 시도하는 중입니다….", ' list-group-item-warning');
+    appendMessage("재연결을 시도하는 중입니다….", ['list-group-item-warning']);
 })
 
 // 명령를 전송하는 경우
@@ -155,17 +159,17 @@ socket.on('command', function(data){
         case 'clear':
             // 청소
             $("#chatRoom").empty();
-            appendMessage("방을 청소했습니다.", ' disabled');
+            appendMessage("방을 청소했습니다.", ['disabled']);
             break;
 
         case 'invalid':
             // 명령어 오류
-            appendMessage("존재하지 않는 명령어입니다.", ' disabled');
+            appendMessage("존재하지 않는 명령어입니다.", ['disabled']);
             break;
 
         case 'alert plaster':
             // 채팅금지 시간 전송 (도배)
-            appendMessage("반복적인 메시지 전송으로 " + (data.response / 1000).toFixed(1).toString() + "초 동안 채팅이 차단되어 있습니다.", ' disabled');
+            appendMessage("반복적인 메시지 전송으로 " + (data.response / 1000).toFixed(1).toString() + "초 동안 채팅이 차단되어 있습니다.", ['disabled']);
             break;
     }
 })
