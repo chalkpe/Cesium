@@ -18,9 +18,9 @@
 var Message = require('./Message');
 
 /**
- * @param {User}   sender
+ * @param {User}   params.sender
  * @param {string} params.text
- * @param {number} [params.date=Date.now()]
+ * @param {number} [params.date]
  * @param {bool}   [params.isHidden=false]
  */
 function Command(params){
