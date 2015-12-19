@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2015  ChalkPE
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 var socket = io.connect({
     'port': 671, 'force new connection': true,
     'reconnect': true, 'reconnection delay': 1000, 'max reconnection attempts': 60
@@ -69,16 +86,22 @@ function escape(text){
 
 // 챗방 메시지 목록에 메시지 축가
 function appendMessage(text, otherClasses){
-    $("#chatRoom").append('<li class="list-group-item' + (otherClasses || '') + '">' + text + '</li>').find('[data-toggle="tooltip"]').tooltip();
+    $("#chatRoom").append($('<li>'),addClass("list-group-item" + ((otherClasses && (' ' + otherClasses.join(' '))) || '')).html(text)).find('[data-toggle="tooltip"]').tooltip();
     if(!$("button#lockScrollButton").hasClass('active')) scrollToBottom();
-};
+}
 
 function createUserSpan(user){
-    return !user ? '' : '<span data-toggle="tooltip" class="username color-' + colors[Math.abs(hashCode(user.nickname)) % colors.length] + '" title="' + user.address + '">' + escape(user.nickname) + '</span>';
+    return !user ? '' : $('<span>').addClass("username").addClass("color-" + colors[Math.abs(hashCode(user.nickname)) % colors.length]).attr({
+        'data-toggle': 'tooltip',
+        'title': user.address
+    }).text(user.nickname).html();
 }
 
 function createDateSpan(date){
-    return !date ? '' : '<span data-toggle="tooltip" class="date color-grey" title="' + moment(date).format('YYYY-MM-DD HH:mm:ss') + '">' + moment(date).format("HH:mm") + '</span>';
+    return !data ? '' : $('<span>').addClass("date color-grey")attr({
+        'data-toggle': 'tooltip',
+        'title': moment(date).format('YYYY-MM-DD HH:mm:ss')
+    }).text(moment(date).format("HH:mm")).html();
 }
 
 // 메시지를 수신할 경우
@@ -121,12 +144,12 @@ socket.on('reconnecting', function(){
 
 // 명령를 전송하는 경우
 socket.on('command', function(data){
-    if(data.request) appendMessage(createUserSpan(me) + ' ' + data.request, ' disabled');
+    if(data.request) appendMessage(createUserSpan(me) + ' ' + data.request, ['disabled']);
 
     switch(data.what){
         case 'online':
             // 접속자 확인
-            appendMessage("온라인: " + data.response.map(createUserSpan).join(', '), ' disabled');
+            appendMessage("온라인: " + data.response.map(createUserSpan).join(', '), ['disabled']);
             break;
 
         case 'clear':
