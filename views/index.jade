@@ -87,16 +87,15 @@ block content
     
     .teal.darken-1
         .container
-            .row.flex-center
-                .col.s10.m8.offset-m1.l9.offset-l1
-                    p.white-text
+            .row
+                .col.s12.m12.l10.offset-l1.flex-center
+                    p.white-text.flex-grow
                         | Latest commit on GitHub:&nbsp;
                         a.teal-text.text-lighten-4(href='//#{repo}/commit/#{hash.trim()}') #{hash.trim().substring(0, 7)}
                         br
                         | This software is distributed under the&nbsp;
                         a.teal-text.text-lighten-4(href='http://www.gnu.org/licenses/agpl-3.0.html') GNU Affero GPL
-                .col.s2.m2.l1
-                    a.waves-effect.waves-light.btn.teal.lighten-1(href='//#{repo}') GitHub
+                    a#github.waves-effect.waves-light.btn.teal.lighten-1(href='//#{repo}') GitHub
     
     .container
         .row
@@ -106,7 +105,7 @@ block content
     #messageBox.white
         .row
             .col.s12.m8.offset-m2.l6.offset-l3.flex-center
-                input#messageInput(type='text', autocomplete='off', placeholder='Message')
+                input#messageInput.flex-grow(type='text', autocomplete='off', placeholder='Message')
                 button#messageSendButton.btn-floating.waves-effect.waves-light
                     i.large.material-icons send
 
