@@ -183,7 +183,7 @@ io.on('connection', function(socket){
         data.sender = socket.user;
 
         // 내용이 없는 경우 전송 안함
-        if(!data.text || (date.text = data.text.trim()).length === 0) return;
+        if(!data.text || (data.text = data.text.trim()).length === 0) return;
 
         // TODO: 길이 제한을 없애고, 대신 처음엔 접혀 있다가 클릭해서 펼쳐 볼 수 있도록 변경
         if(data.text.length > 1024) return;
