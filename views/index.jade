@@ -75,16 +75,16 @@ block content
         ['#h.anime', "애니메이션"],
         ['#h.music-games', "리듬게임"]
     ])
+    .navbar-fixed    
+        nav.teal.lighten-1
+            .nav-wrapper.container
+                a.brand-logo(href='#') Cesium
+                a.button-collapse(href='#', data-activates='mobile-side-nav')
+                    i.material-icons menu
+                +NavDropdownButtons([
+                    ["일반", 'ss'], ["직군", 'w'], ["프로젝트", 'p'], ["관심사", 'h']
+                ])
 
-    nav.teal.lighten-1
-        .nav-wrapper.container
-            a.brand-logo(href='#') Cesium
-            a.button-collapse(href='#', data-activates='mobile-side-nav')
-                i.material-icons menu
-            +NavDropdownButtons([
-                ["일반", 'ss'], ["직군", 'w'], ["프로젝트", 'p'], ["관심사", 'h']
-            ])
-                
     .container  
         .row
             .col.s12.m10.offset-m1.l10.offset-l1
@@ -93,6 +93,7 @@ block content
                         | #{title} #{version} (
                         a(href='//#{repo}/commit/#{hash}') #{hash.substring(0, 7)}
                         | )
+
     #messageBox.white
         .row
             .col.s12.m8.offset-m2.l6.offset-l3.flex-center

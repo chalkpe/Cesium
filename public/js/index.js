@@ -191,8 +191,8 @@ $(function(){
         if(e.keyCode === 13) sendMessage();
     });
 
+    $("#chatRoom").css('margin-top', ($("nav").outerHeight() + 16) + "px");
     $("#chatRoom").css('margin-bottom', ($("#messageBox").outerHeight() + 16) + "px");
-    $("#messageBox").pushpin({ offset: $(document).innerHeight() - $("#messageBox").outerHeight() });
 
     $("#nicknameInput").attr('data-tooltip', "user" + Math.floor(1000 + 9000 * Math.random())).keydown(function(e){
         if(e.keyCode === 13) $("#nicknameSendButton").click();
