@@ -1,42 +1,119 @@
 extends layout
 
+// ====================================================================================================
+
+mixin DropdownButton(name, id)
+    li
+        a.dropdown-button(href='#', data-activates='#{id}')
+            | #{name}
+            i.material-icons.right arrow_drop_down
+
+mixin DropdownContent(id, contents)
+    ul.dropdown-content(id='#{id}')
+        each content in contents
+            +NavItem(content[0], content[1])
+    ul.dropdown-content(id='#{id}-mobile')
+        each content in contents
+            +NavItem(content[0], content[1])
+            
+mixin DropdownContentAdvanced(id, contents, suffix)
+    ul.dropdown-content(id='#{id}')
+        each content in contents
+            +NavItem(content[0], content[1])
+            +NavItem(content[0] + suffix[0], content[1] + suffix[1])
+    ul.dropdown-content(id='#{id}-mobile')
+        each content in contents
+            +NavItem(content[0], content[1])
+            +NavItem(content[0] + suffix[0], content[1] + suffix[1])
+
+mixin NavDropdownButtons(buttons)
+    ul.right.hide-on-med-and-down
+        each button in buttons
+            +DropdownButton(button[0], button[1])
+    ul.side-nav#mobile-side-nav
+        each button in buttons
+            +DropdownButton(button[0], button[1] + '-mobile')
+    
+mixin NavItem(url, name)
+    li
+        a(href='/#{url}') #{name}
+    
+// ====================================================================================================    
+
 block stylesheets
     link(rel='stylesheet', href='/css/index.css')
 
 block content
-    nav.navbar.navbar-default.navbar-fixed-bottom
-        .col-less-padding.col-xs-2.col-md-offset-2.col-md-1
-            button#lockScrollButton.btn.btn-lg.btn-default.btn-block(data-toggle='tooltip', title='Scroll lock')
-                span.glyphicon.glyphicon-pushpin
-        .col-less-padding.col-xs-10.col-md-7
-            #messageInputField.input-group
-                input#messageInput.form-control.input-lg(type='text', autocomplete='off', placeholder='Message')
-                span.input-group-btn
-                    button#messageSendButton.btn.btn-lg.btn-primary(type='button') Send
-            
-    .container
-        .row
-            .col-xs-12.col-xs-offset-0.col-md-10.col-md-offset-1
-                ul#chatRoom.list-group
-                    li.list-group-item= title + ' ' + version + ' ('
-                        a(href='//#{repo}/commit/#{hash}')= hash.substring(0, 7)
-                        | )
-                        
-    #nicknameModal.modal.fade(role='dialog', tabindex='-1' data-backdrop='static' data-keyboard='false')
-        .modal-dialog
-            .modal-content
-                .modal-header
-                    h4.modal-title What's your nickname?
-                .modal-body
-                    #nicknameFormGroup.form-group.has-feedback
-                        .input-group
-                            span.input-group-addon @
-                            input#nicknameInput.input-lg.form-control(type='text', autocomplete='off', maxlength='20' pattern='^[A-Za-z0-9-_. ㄱ-ㅎㅏ-ㅣ가-힣]{2,20}$' placeholder='Nickname', data-toggle='tooltip')
-                .modal-footer
-                    button#nicknameSendButton.btn.btn-primary Start
+    +DropdownContent('ss', [
+        ['#ss', "일반 채팅"],
+        ['#ss.notice', "공지사항"],
+        ['#ss.report', "신고"]
+    ])
+    
+    +DropdownContent('w', [
+        ['#w.code', "프로그래밍"],
+        ['#w.design', "디자인"],
+        ['#w.compose', "작곡"],
+        ['#w.video', "영상 컨텐츠"],
+        ['#w.3d', "3D 그래픽"],
+        ['#w.illust', "일러스트레이션"],
+        ['#w.strategy', "기획"],
+        ['#w.translate', "번역"],
+        ['#w.engineer', "엔지니어링"]
+    ])
+    
+    +DropdownContentAdvanced('p', [
+        ['#p.1-1', "FLOW 프로젝트"],
+        ['#p.12-2', "제노퍼스"],
+        ['#p.13-1', "팀 리창인생"],
+        ['#p.14-1', "NoCo"]
+    ], ['.notice', " 공지"])
+    
+    +DropdownContent('h', [
+        ['#h.technology', "기술"],
+        ['#h.music', "음악"],
+        ['#h.anime', "애니메이션"],
+        ['#h.music-games', "리듬게임"]
+    ])
+
+    nav.teal.lighten-1
+        .nav-wrapper.container
+            a.brand-logo(href='#') Cesium
+            a.button-collapse(href='#', data-activates='mobile-side-nav')
+                i.material-icons menu
+            +NavDropdownButtons([
+                ["일반", 'ss'], ["직군", 'w'], ["프로젝트", 'p'], ["관심사", 'h']
+            ])
                 
+    .container  
+        .row
+            .col.s12.m10.offset-m1.l10.offset-l1
+                ul#chatRoom.collection
+                    li.collection-item.grey.lighten-3
+                        | #{title} #{version} (
+                        a(href='//#{repo}/commit/#{hash}') #{hash.substring(0, 7)}
+                        | )
+    #messageBox.white
+        .row
+            .col.s12.m8.offset-m2.l6.offset-l3.flex-center
+                input#messageInput(type='text', autocomplete='off', placeholder='Message')
+                button#messageSendButton.btn-floating.waves-effect.waves-light
+                    i.large.material-icons send
+
+    #nicknameModal.modal.bottom-sheet
+        .modal-content
+            h4 What's your nickname?
+            .row
+                .col.s12
+                    .input-field
+                        i.material-icons.prefix perm_contact_calendar
+                        input#nicknameInput.tooltipped(type='text', autocomplete='off', length='20', data-position="bottom", data-tooltip='ASDF')
+                        label(for="nicknameInput") Nickname
+        .modal-footer
+            a#nicknameSendButton.waves-effect.waves-teal.btn-flat Start
+
+// ====================================================================================================
 
 block scripts
     script(src='//cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js')
-    script(src='/lib/bootstrap-validator/dist/validator.min.js')
     script(src='/js/index.js')

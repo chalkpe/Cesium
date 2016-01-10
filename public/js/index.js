@@ -37,13 +37,15 @@ var reasons = {
 
 socket.on('login', function(data){
     if(!data.success){
-        $("#nicknameFormGroup").addClass('has-error');
-        $("#nicknameInput").attr('data-original-title', reasons[data.reason]).tooltip('show');
+        $("#nicknameInput").removeClass('valid').addClass('invalid');
+        $("#nicknameInput").next("label").attr('data-error', reasons[data.reason]);
         return;
     }
 
-    $("#nicknameModal").modal('hide');
-    appendMessage(createUserSpan(me = data.user) + "님, 안녕하세요!", ['disabled']);
+    $("#nicknameInput").removeClass('invalid').addClass('valid');
+    $("#nicknameModal").closeModal();
+
+    appendMessage(createUserSpan(me = data.user) + "님, 안녕하세요!", ['grey', 'lighten-3']);
     $("#messageInput").focus();
 });
 
@@ -91,22 +93,17 @@ function escape(text){
 
 // 챗방 메시지 목록에 메시지 축가
 function appendMessage(text, otherClasses){
-    $("#chatRoom").append($('<li>').addClass("list-group-item" + ((otherClasses && (' ' + otherClasses.join(' '))) || '')).html(text)).find('[data-toggle="tooltip"]').tooltip();
-    if(!$("button#lockScrollButton").hasClass('active')) scrollToBottom();
+    var item = $('<li>').html(text).addClass("collection-item" + ((otherClasses && (' ' + otherClasses.join(' '))) || ''));
+    $("#chatRoom").append(item).find('.tooltipped').tooltip({ delay: 50 });
+    if(hasScrolledToBottom) scrollToBottom();
 }
 
 function createUserSpan(user){
-    return !user ? '' : $('<span>').addClass("username").addClass("color-" + colors[Math.abs(hashCode(user.nickname)) % colors.length]).attr({
-        'data-toggle': 'tooltip',
-        'title': user.address
-    }).text(user.nickname).toHTML();
+    return !user ? '' : $('<span>').addClass(colors[Math.abs(hashCode(user.nickname)) % colors.length] + "-text username tooltipped").attr('data-tooltip', user.address).text(user.nickname).toHTML();
 }
 
 function createDateSpan(date){
-    return !date ? '' : $('<span>').addClass("date color-grey").attr({
-        'data-toggle': 'tooltip',
-        'title': moment(date).format('YYYY-MM-DD HH:mm:ss')
-    }).text(moment(date).format("HH:mm")).toHTML();
+    return !date ? '' : $('<span>').addClass("grey-text date tooltipped").attr('data-tooltip', moment(date).format('YYYY-MM-DD HH:mm:ss')).text(moment(date).format("HH:mm")).toHTML();
 }
 
 // 메시지를 수신할 경우
@@ -140,80 +137,79 @@ function sendMessage(){
 }
 
 socket.on('disconnect', function(){
-    appendMessage("이런, 서버와의 연결이 끊겼습니다.", ['list-group-item-warning']);
+    appendMessage("이런, 서버와의 연결이 끊겼습니다.", ['red', 'lighten-2']);
 });
 
 socket.on('reconnecting', function(){
-    appendMessage("재연결을 시도하는 중입니다….", ['list-group-item-warning']);
+    appendMessage("재연결을 시도하는 중입니다….", ['amber', 'lighten-2']);
 })
 
 // 명령를 전송하는 경우
 socket.on('command', function(data){
-    if(data.request) appendMessage(createUserSpan(me) + ' ' + data.request, ['disabled']);
+    if(data.request) appendMessage(createUserSpan(me) + ' ' + data.request, ['grey', 'lighten-3']);
 
     switch(data.what){
         case 'online':
             // 접속자 확인
-            appendMessage("온라인: " + data.response.map(createUserSpan).join(', '), ['disabled']);
+            appendMessage("온라인: " + data.response.map(createUserSpan).join(', '), ['grey', 'lighten-3']);
             break;
 
         case 'clear':
             // 청소
             $("#chatRoom").empty();
-            appendMessage("방을 청소했습니다.", ['disabled']);
+            appendMessage("방을 청소했습니다.", ['grey', 'lighten-3']);
             break;
 
         case 'invalid':
             // 명령어 오류
-            appendMessage("존재하지 않는 명령어입니다.", ['disabled']);
+            appendMessage("존재하지 않는 명령어입니다.", ['grey', 'lighten-3']);
             break;
 
         case 'alert plaster':
             // 채팅금지 시간 전송 (도배)
-            appendMessage("반복적인 메시지 전송으로 " + (data.response / 1000).toFixed(1).toString() + "초 동안 채팅이 차단되어 있습니다.", ['disabled']);
+            appendMessage("반복적인 메시지 전송으로 " + (data.response / 1000).toFixed(1).toString() + "초 동안 채팅이 차단되어 있습니다.", ['grey', 'lighten-3']);
             break;
     }
 })
+
+var hasScrolledToBottom = true;
+$(window).scroll(function(){
+    hasScrolledToBottom = ($(window).scrollTop() + $(window).height()) > ($(document).height() - ($("#messageBox").outerHeight() + 32));
+});
 
 function scrollToBottom(){
     $("html, body").scrollTop($(document).height());
 }
 
 $(function(){
-    $('[data-toggle="tooltip"]').tooltip();
+    $(".dropdown-button").dropdown();
+    $(".button-collapse").sideNav();
+    $('.tooltipped').tooltip({ delay: 50 });
 
-    $("button#messageSendButton").click(sendMessage);
-    $("input#messageInput").keydown(function(e){
+    $("#messageSendButton").click(sendMessage);
+    $("#messageInput").keydown(function(e){
         if(e.keyCode === 13) sendMessage();
     });
 
-    $("button#lockScrollButton").click(function(){
-        $(this).toggleClass('active');
-        $(this).blur();
-    });
+    $("#chatRoom").css('margin-bottom', ($("#messageBox").outerHeight() + 16) + "px");
+    $("#messageBox").pushpin({ offset: $(document).innerHeight() - $("#messageBox").outerHeight() });
 
-    function resize(){
-        $(".container").css('padding-bottom', ($(".navbar-fixed-bottom").outerHeight() + 16) + "px");
-    } resize(); $(window).resize(resize);
-
-    $("html, body").on('scroll mousedown wheel DOMMouseScroll mousewheel touchmove', function(){
-        $("html, body").stop();
-    });
-
-    $("#nicknameInput").attr('placeholder', "user" + Math.floor(1000 + 9000 * Math.random())).keydown(function(e){
+    $("#nicknameInput").attr('data-tooltip', "user" + Math.floor(1000 + 9000 * Math.random())).keydown(function(e){
         if(e.keyCode === 13) $("#nicknameSendButton").click();
-    }).on('validate.bs.validator', function(){
-        $("#nicknameInput").tooltip('hide').tooltip('destroy');
-    }).validator({ delay: 0 });
+        $("#nicknameInput").next("label").attr('data-error', "");
+    });
 
     $("#nicknameSendButton").click(function(){
         var val = $("#nicknameInput").val();
-        if(!val || val.trim().length === 0) val = $("#nicknameInput").attr('placeholder');
+        if(!val || val.trim().length === 0) val = $("#nicknameInput").attr('data-tooltip');
 
         socket.emit('login', { nickname: nickname = val });
     });
 
-    $("#nicknameModal").on('shown.bs.modal', function(e){
-        $("#nicknameInput").focus();
-    }).modal('show');
+    $("#nicknameModal").openModal({
+        dismissible: false,
+        ready: function(){
+            $("#nicknameInput").focus();
+        }
+    });
 });

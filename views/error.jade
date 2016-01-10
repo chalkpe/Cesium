@@ -1,6 +1,11 @@
 extends layout
 
 block content
-    .container
-        h1= error.status + ' ' + message
-        pre #{error.stack}
+    .row
+        .col.s12.m6
+            .card.big.grey.darken-1
+                .card-content.white-text
+                    span.card-title= (error.status ? (error.status + ' ') : '') + message
+                    textarea.materialize-textarea= error.stack
+                .card-action
+                    a(href="/") Back to title

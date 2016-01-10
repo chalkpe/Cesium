@@ -1,6 +1,7 @@
+@import url(http://fonts.googleapis.com/earlyaccess/notosanskr.css);
+
 * {
-    /* @todo Add Korean (web) font: 나눔바른고딕 */
-    font-family: "Gotham Light", "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    font-family: 'Roboto', 'Noto Sans KR', sans-serif;
 }
 
 .username {
@@ -35,24 +36,38 @@
 .color-grey        { color: #9E9E9E; }
 .color-blue-grey   { color: #607D8B; }
 
-.container {
+#chatRoom {
     margin-top: 16px;
-}
-
-.navbar {
-    padding: 8px;
-}
-
-.col-less-padding {
-    padding-left: 0px;
-    padding-right: 8px;
-}
-
-.col-less-padding:last-child {
-    padding-left: 0px;
-    padding-right: 0px;
 }
 
 #chatRoom li {
     word-wrap: break-word;
+}
+
+#messageBox {
+    position: absolute; left: 0px; bottom: 0px; right: 0px;
+    box-shadow: 0 -2px 5px 0 rgba(0,0,0,0.16),0 -2px 10px 0 rgba(0,0,0,0.12)
+}
+
+#messageBox .row {
+    margin-bottom: 0px;
+}
+
+.flex-center {
+    display: flex; align-items: center;
+}
+
+#messageInput {
+    margin-top: 7px;
+    flex-grow: 1;
+}
+
+#messageSendButton {
+    width: 48px; height: 48px;
+    line-height: normal; flex: none;
+    margin-left: 15px;
+}
+
+#messageSendButton i {
+    line-height: 48px;
 }
