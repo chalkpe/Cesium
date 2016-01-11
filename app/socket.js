@@ -61,11 +61,10 @@ module.exports = function(io){
     };
 
     var Commands = {
-        emit: function(socket, command, what, response){
+        emit: function(socket, command, name, response){
             socket.emit('command', {
-                what: what || (command && command.name) || null,
-                request: (command && command.text) || null,
-                response: response || null
+                name: name || (command && command.name) || null,
+                command: command, response: response || null
             });
         },
 
@@ -90,7 +89,7 @@ module.exports = function(io){
 
         socket.on('login', function(data){
             if(!Sockets.that.is.authorized(socket)) return;
-            io.emit('login', Sockets.to.user(socket));
+            socket.emit('login', Sockets.to.user(socket));
 
             Commands.client.online(socket);
             io.emit('user join', Sockets.to.user(socket));

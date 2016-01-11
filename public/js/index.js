@@ -38,6 +38,12 @@ function shuffleArray(array){
     });
 }
 
+function distinctArray(array){
+    return array.filter(function(element, index){
+        return array.indexOf(element) === index;
+    });
+}
+
 function hashCode(str){
     return str ? str.split("").reduce(function(a,b){ a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0) : 0;
 }
@@ -80,7 +86,7 @@ function appendMessage(text, otherClasses){
 }
 
 function createUserSpan(user){
-    return !user ? '' : $('<span>').addClass(colors[Math.abs(hashCode(user.username)) % colors.length] + "-text username tooltipped").attr('data-tooltip', user.username).text(user.displayName).toHTML();
+    return !user ? '' : $('<span>').addClass(colors[Math.abs(hashCode(user.username)) % colors.length] + "-text username tooltipped").attr('data-tooltip', "@" + user.username).text(user.displayName).toHTML();
 }
 
 function createDateSpan(date){
@@ -127,12 +133,12 @@ socket.on('reconnecting', function(){
 
 // 명령를 전송하는 경우
 socket.on('command', function(data){
-    if(data.request) appendMessage(createUserSpan(me) + ' ' + data.request, ['grey', 'lighten-3']);
+    if(data.command) appendMessage(createUserSpan(data.command.sender) + ' ' + data.command.text, ['grey', 'lighten-3']);
 
-    switch(data.what){
+    switch(data.name){
         case 'online':
             // 접속자 확인
-            appendMessage("온라인: " + data.response.map(createUserSpan).join(', '), ['grey', 'lighten-3']);
+            appendMessage("온라인: " + distinctArray(data.response.map(createUserSpan)).join(', '), ['grey', 'lighten-3']);
             break;
 
         case 'clear':
