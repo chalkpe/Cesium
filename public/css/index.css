@@ -4,6 +4,14 @@
     font-family: 'Roboto', 'Noto Sans KR', sans-serif;
 }
 
+.icon-block {
+    padding: 0 15px;
+}
+
+.icon-block .material-icons {
+    font-size: inherit;
+}
+
 .username {
     color: crimson;
     font-weight: bold;
@@ -39,13 +47,17 @@
     flex-grow: 1;
 }
 
+.flex-center .btn-floating {
+    flex: none;
+}
+
 #messageInput {
     margin-top: 7px;
 }
 
 #messageSendButton {
     width: 48px; height: 48px;
-    line-height: normal; flex: none;
+    line-height: normal;
     margin-left: 15px;
 }
 

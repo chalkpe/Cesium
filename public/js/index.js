@@ -15,21 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var socket = io.connect({
-    'port': 671, 'force new connection': true,
-    'reconnect': true, 'reconnection delay': 1000, 'max reconnection attempts': 60
-});
-
-socket.on('connect', function(){
-    socket.emit('login');
-});
-
-socket.on('login', function(data){
-    console.log(data);
-    appendMessage(createUserSpan(data) + "님, 안녕하세요!", ['grey', 'lighten-3']);
-    $("#messageInput").focus();
-});
-
 function shuffleArray(array){
     return array.map(function(element){
         return [Math.random(), element];
@@ -78,19 +63,23 @@ function escape(text){
     return $('<span>').text(text).html();
 }
 
-// 챗방 메시지 목록에 메시지 축가
-function appendMessage(text, otherClasses){
-    var item = $('<li>').html(text).addClass("collection-item" + ((otherClasses && (' ' + otherClasses.join(' '))) || ''));
-    $("#chatRoom").append(item).find('.tooltipped').tooltip({ delay: 50 });
-    if(hasScrolledToBottom) scrollToBottom();
-}
-
 function createUserSpan(user){
     return !user ? '' : $('<span>').addClass(colors[Math.abs(hashCode(user.username)) % colors.length] + "-text username tooltipped").attr('data-tooltip', "@" + user.username).text(user.displayName).toHTML();
 }
 
 function createDateSpan(date){
     return !date ? '' : $('<span>').addClass("grey-text date tooltipped").attr('data-tooltip', moment(date).format('YYYY-MM-DD HH:mm:ss')).text(moment(date).format("HH:mm")).toHTML();
+}
+
+function onConnect(){
+    socket.emit('login');
+}
+
+function onLogin(data){
+    console.log(data);
+
+    appendMessage(createUserSpan(data) + "님, 안녕하세요!", ['grey', 'lighten-3']);
+    $("#messageInput").focus();
 }
 
 // 메시지를 수신할 경우
@@ -108,31 +97,8 @@ function onUserLeft(user){
     appendMessage(createUserSpan(user) + '님이 퇴장하셨습니다.');
 }
 
-socket.on('message', onMessage);
-socket.on('user join', onUserJoin);
-socket.on('user left', onUserLeft);
-
-// 메시지를 발신하는 경우
-function sendMessage(){
-    var text = $("#messageInput").val();
-    if(text){
-        socket.emit('message', { text: text });
-        $("#messageInput").val('');
-    }
-
-    $("#messageInput").focus();
-}
-
-socket.on('disconnect', function(){
-    appendMessage("이런, 서버와의 연결이 끊겼습니다.", ['red', 'lighten-3']);
-});
-
-socket.on('reconnecting', function(){
-    appendMessage("재연결을 시도하는 중입니다….", ['amber', 'lighten-3']);
-})
-
 // 명령를 전송하는 경우
-socket.on('command', function(data){
+function onCommand(data){
     if(data.command) appendMessage(createUserSpan(data.command.sender) + ' ' + data.command.text, ['grey', 'lighten-3']);
 
     switch(data.name){
@@ -157,7 +123,45 @@ socket.on('command', function(data){
             appendMessage("반복적인 메시지 전송으로 " + (data.response / 1000).toFixed(1).toString() + "초 동안 채팅이 차단되어 있습니다.", ['grey', 'lighten-3']);
             break;
     }
-})
+}
+
+function onDisconnected(){
+    appendMessage("이런, 서버와의 연결이 끊겼습니다.", ['red', 'lighten-3']);
+}
+
+function onReconnecting(){
+    appendMessage("재연결을 시도하는 중입니다….", ['amber', 'lighten-3']);
+}
+
+function sendMessage(){
+    var text = $("#messageInput").val();
+    if(text){
+        socket.emit('message', { text: text });
+        $("#messageInput").val('');
+    }
+    $("#messageInput").focus();
+}
+
+// 챗방 메시지 목록에 메시지 축가
+function appendMessage(text, otherClasses){
+    var item = $('<li>').html(text).addClass("collection-item" + ((otherClasses && (' ' + otherClasses.join(' '))) || ''));
+    $("#chatRoom").append(item).find('.tooltipped').tooltip({ delay: 50 });
+    if(hasScrolledToBottom) scrollToBottom();
+}
+
+var socket = io.connect({
+    'port': 671, 'force new connection': true, 'reconnect': true,
+    'reconnection delay': 1000, 'max reconnection attempts': 60
+});
+
+socket.on('connect', onConnect);
+socket.on('login', onLogin);
+socket.on('message', onMessage);
+socket.on('command', onCommand);
+socket.on('user join', onUserJoin);
+socket.on('user left', onUserLeft);
+socket.on('disconnect', onDisconnected);
+socket.on('reconnecting', onReconnecting);
 
 var hasScrolledToBottom = true;
 $(window).scroll(function(){
@@ -169,14 +173,7 @@ function scrollToBottom(){
 }
 
 $(function(){
-    $(".dropdown-button").dropdown({ constrain_width: false, hover: true });
-    $(".button-collapse").sideNav();
-    $('.tooltipped').tooltip({ delay: 50 });
-
-    $("#messageSendButton").click(sendMessage);
-    $("#messageInput").keydown(function(e){
-        if(e.keyCode === 13) sendMessage();
-    });
-
     $("#chatRoom").css('margin-bottom', ($("#messageBox").outerHeight() + 16) + "px");
+    $("#messageInput").keydown(function(e){ if(e.keyCode === 13) $("#messageSendButton").click(); });
+    $("#messageSendButton").click(sendMessage);
 });

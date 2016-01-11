@@ -85,13 +85,15 @@ module.exports = function(io){
     };
 
     io.on('connection', function(socket){
-        console.log('***IO***', Sockets.to.user(socket));
-
         socket.on('login', function(data){
-            if(!Sockets.that.is.authorized(socket)) return;
-            socket.emit('login', Sockets.to.user(socket));
+            if(!Sockets.that.is.authorized(socket)){
+                socket.emit('login', false);
+                return;
+            }
 
+            socket.emit('login', Sockets.to.user(socket));
             Commands.client.online(socket);
+
             io.emit('user join', Sockets.to.user(socket));
         });
 

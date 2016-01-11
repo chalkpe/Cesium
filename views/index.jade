@@ -1,6 +1,7 @@
 extends layout
 
-// ====================================================================================================
+block themeColor
+    - var themeColor = '#26a69a';
 
 mixin DropdownButton(name, id)
     li
@@ -33,84 +34,47 @@ mixin NavDropdownButtons(buttons)
     ul.side-nav#mobile-side-nav
         each button in buttons
             +DropdownButton(button[0], button[1] + '-mobile')
-    
+
+mixin NavItems(items)
+    ul.right.hide-on-med-and-down
+        each item in items
+            +NavItem(item[0], item[1])
+    ul.side-nav#mobile-side-nav
+        each item in items
+            +NavItem(item[0], item[1])
+
+
 mixin NavItem(url, name)
     li
         a(href='/#{url}') #{name}
-    
-// ====================================================================================================    
 
 block stylesheets
     link(rel='stylesheet', href='/css/index.css')
-
+waves-effect waves-light btn
 block content
-    +DropdownContent('ss', [
-        ['#ss', "일반 채팅"],
-        ['#ss.notice', "공지사항"],
-        ['#ss.report', "신고"]
-    ])
+    if req.isAuthenticated()
+        include ./includes/dropdown-contents
     
-    +DropdownContent('w', [
-        ['#w.code', "프로그래밍"],
-        ['#w.design', "디자인"],
-        ['#w.compose', "작곡"],
-        ['#w.video', "영상 컨텐츠"],
-        ['#w.3d', "3D 그래픽"],
-        ['#w.illust', "일러스트레이션"],
-        ['#w.strategy', "기획"],
-        ['#w.translate', "번역"],
-        ['#w.engineer', "엔지니어링"]
-    ])
-    
-    +DropdownContentAdvanced('p', [
-        ['#p.1-1', "FLOW 프로젝트"],
-        ['#p.12-2', "제노퍼스"],
-        ['#p.13-1', "팀 리창인생"],
-        ['#p.14-1', "NoCo"]
-    ], ['.notice', " 공지"])
-    
-    +DropdownContent('h', [
-        ['#h.technology', "기술"],
-        ['#h.music', "음악"],
-        ['#h.anime', "애니메이션"],
-        ['#h.music-games', "리듬게임"]
-    ])
     .navbar-fixed    
         nav.teal.lighten-1
             .nav-wrapper.container
                 a.brand-logo(href='#') #{title}
                 a.button-collapse(href='#', data-activates='mobile-side-nav')
                     i.material-icons menu
-                +NavDropdownButtons([
-                    ["일반", 'ss'], ["직군", 'w'], ["프로젝트", 'p'], ["관심사", 'h']
-                ])
-    
-    .teal.darken-1
-        .container
-            .row
-                .col.s12.m12.l10.offset-l1.flex-center
-                    p.white-text.flex-grow
-                        | Latest commit on GitHub:&nbsp;
-                        a.teal-text.text-lighten-4(href='//#{repo}/commit/#{hash.trim()}') #{hash.trim().substring(0, 7)}
-                        br
-                        | This software is distributed under the&nbsp;
-                        a.teal-text.text-lighten-4(href='http://www.gnu.org/licenses/agpl-3.0.html') GNU Affero GPL
-                    a#github.waves-effect.waves-light.btn.teal.lighten-1(href='//#{repo}') GitHub
-    
-    .container
-        .row
-            .col.s12.m10.offset-m1.l10.offset-l1
-                ul#chatRoom.collection
+                if req.isAuthenticated()
+                    include ./includes/dropdown-buttons
+                else
+                    +NavItems([['auth/twitter', "Sign in with Twitter"]])
 
-    #messageBox.white
-        .row
-            .col.s12.m8.offset-m2.l6.offset-l3.flex-center
-                input#messageInput.flex-grow(type='text', autocomplete='off', placeholder='Message')
-                button#messageSendButton.btn-floating.waves-effect.waves-light
-                    i.large.material-icons send
-
-// ====================================================================================================
+    if req.isAuthenticated()
+        include ./includes/chat-room
+    else
+        include ./includes/index
 
 block scripts
     script(src='//cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js')
-    script(src='/js/index.js')
+    script.
+        $(".dropdown-button").dropdown({ constrain_width: false, hover: true });
+        $(".button-collapse").sideNav();
+    if req.isAuthenticated()
+        script(src='/js/index.js')

@@ -1,10 +1,12 @@
 extends layout
 
+block themeColor
+    - var themeColor = '#EF5350';
+    
 block content
     nav.red.lighten-1
         .nav-wrapper.container
             a.brand-logo(href='/')
-                i.material-icons.left error
                 | #{(error.status ? (error.status + ' ') : '') + message}
     
     .row

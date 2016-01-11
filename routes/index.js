@@ -28,10 +28,8 @@ fs.readFile(path.join(__dirname, '..', '.git', 'refs', 'heads', 'master'), 'utf-
 });
 
 router.get('/', function(req, res, next){
-    console.log("**INDEX**", req.user);
-
     res.render('index', {
-        title: 'Cesium', version: '0.0.1',
+        req: req, title: 'Cesium', version: '0.0.1',
         hash: hash, repo: 'github.com/ChalkPE/Cesium'
     });
 });

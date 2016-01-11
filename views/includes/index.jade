@@ -1,0 +1,57 @@
+.section
+    .container
+        br
+        br
+        .row.center
+            img(src='/favicon.png', style='width: 128px')
+        .row.center
+            h5.header.col.s12.light
+                a.orange-text.text-darken-2(href="//nodejs.org") Node.js
+                | &nbsp;powered chatting server
+        .row.center
+            a.btn-large.orange.waves-effect.waves-light(href="/auth/twitter") Get started with Twitter
+
+.container
+    .section
+        .row
+            .col.s12.m4
+                .icon-block
+                    h2.center.amber-text
+                        i.mediun.material-icons speaker_notes
+                    h5.center Chatting
+                    p.light Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent et finibus quam. Donec interdum, libero nec bibendum sagittis, magna leo hendrerit urna, et imperdiet neque ligula a justo.
+            .col.s12.m4
+                .icon-block
+                    h2.center.amber-text
+                        i.mediun.material-icons group
+                    h5.center Community
+                    p.light Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent et finibus quam. Donec interdum, libero nec bibendum sagittis, magna leo hendrerit urna, et imperdiet neque ligula a justo.
+            .col.s12.m4
+                .icon-block
+                    h2.center.amber-text
+                        i.mediun.material-icons assessment
+                    h5.center Analysis
+                    p.light Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent et finibus quam. Donec interdum, libero nec bibendum sagittis, magna leo hendrerit urna, et imperdiet neque ligula a justo.
+
+footer.teal.page-footer
+    .container
+        .row
+            .col.l7.s12
+                h5.white-text Cesium #{version}
+                p.grey-text.text-lighten-4
+                    | Latest commit on GitHub:&nbsp;
+                    a.teal-text.text-lighten-4(href='//#{repo}/commit/#{hash.trim()}') #{hash.trim().substring(0, 16)}
+                    br
+                    | This software is distributed under the&nbsp;
+                    a.teal-text.text-lighten-4(href='http://www.gnu.org/licenses/agpl-3.0.html') GNU Affero General Public License
+            .col.l3.offset-l2.s12
+                h5.white-text Links
+                ul
+                    li
+                        a.grey-text.text-lighten-3(href='//#{repo}/blob/master/LICENSE') License
+                    li
+                        a.grey-text.text-lighten-3(href='//#{repo}/blob/master/README') Instruction
+    .footer-copyright
+        .container
+            | &copy 2015-2016 ChalkPE
+            a.grey-text.text-lighten-4.right(href='//#{repo}') View on GitHub
