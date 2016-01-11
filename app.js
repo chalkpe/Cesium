@@ -35,7 +35,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 var mongoose = require('mongoose');
@@ -59,7 +59,7 @@ process.on('SIGINT', gracefulExit).on('SIGTERM', gracefulExit);
 
 var MongoStore = require('connect-mongo')(session);
 var mongoStore = new MongoStore({ mongooseConnection: mongoose.connection });
-app.use(session({ secret: 'cesium', key: 'cesium.sid', store: mongoStore }));
+app.use(session({ secret: 'cesium', key: 'cesium.sid', store: mongoStore, resave: true, saveUninitialized: true }));
 
 var passport = require('passport');
 app.use(passport.initialize());

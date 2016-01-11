@@ -20,32 +20,13 @@ var socket = io.connect({
     'reconnect': true, 'reconnection delay': 1000, 'max reconnection attempts': 60
 });
 
-var nickname = null;
-var me = null;
-
 socket.on('connect', function(){
-    if(nickname) socket.emit('login', { nickname: nickname });
+    socket.emit('login');
 });
 
-var reasons = {
-    'empty': "The nickname is empty",
-    'too-short': "The nickname is too short",
-    'too-long': "The nickname is too long",
-    'wrong-format': "Invalid format",
-    'duplicate': "The nickname is already in use"
-};
-
 socket.on('login', function(data){
-    if(!data.success){
-        $("#nicknameInput").removeClass('valid').addClass('invalid');
-        $("#nicknameInput").next("label").attr('data-error', reasons[data.reason]);
-        return;
-    }
-
-    $("#nicknameInput").removeClass('invalid').addClass('valid');
-    $("#nicknameModal").closeModal();
-
-    appendMessage(createUserSpan(me = data.user) + "님, 안녕하세요!", ['grey', 'lighten-3']);
+    console.log(data);
+    appendMessage(createUserSpan(data) + "님, 안녕하세요!", ['grey', 'lighten-3']);
     $("#messageInput").focus();
 });
 
@@ -99,7 +80,7 @@ function appendMessage(text, otherClasses){
 }
 
 function createUserSpan(user){
-    return !user ? '' : $('<span>').addClass(colors[Math.abs(hashCode(user.nickname)) % colors.length] + "-text username tooltipped").attr('data-tooltip', user.address).text(user.nickname).toHTML();
+    return !user ? '' : $('<span>').addClass(colors[Math.abs(hashCode(user.username)) % colors.length] + "-text username tooltipped").attr('data-tooltip', user.username).text(user.displayName).toHTML();
 }
 
 function createDateSpan(date){
@@ -137,11 +118,11 @@ function sendMessage(){
 }
 
 socket.on('disconnect', function(){
-    appendMessage("이런, 서버와의 연결이 끊겼습니다.", ['red', 'lighten-2']);
+    appendMessage("이런, 서버와의 연결이 끊겼습니다.", ['red', 'lighten-3']);
 });
 
 socket.on('reconnecting', function(){
-    appendMessage("재연결을 시도하는 중입니다….", ['amber', 'lighten-2']);
+    appendMessage("재연결을 시도하는 중입니다….", ['amber', 'lighten-3']);
 })
 
 // 명령를 전송하는 경우
@@ -192,23 +173,4 @@ $(function(){
     });
 
     $("#chatRoom").css('margin-bottom', ($("#messageBox").outerHeight() + 16) + "px");
-
-    $("#nicknameInput").attr('data-tooltip', "user" + Math.floor(1000 + 9000 * Math.random())).keydown(function(e){
-        if(e.keyCode === 13) $("#nicknameSendButton").click();
-        $("#nicknameInput").next("label").attr('data-error', "");
-    });
-
-    $("#nicknameSendButton").click(function(){
-        var val = $("#nicknameInput").val();
-        if(!val || val.trim().length === 0) val = $("#nicknameInput").attr('data-tooltip');
-
-        socket.emit('login', { nickname: nickname = val });
-    });
-
-    $("#nicknameModal").openModal({
-        dismissible: false,
-        ready: function(){
-            $("#nicknameInput").focus();
-        }
-    });
 });
