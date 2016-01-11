@@ -24,19 +24,29 @@ var favicon = require('serve-favicon');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 
+var mongoose = require('mongoose');
+var passport = require('passport');
+var session = require('express-session');
+
 var app = express();
 app.set('port', '671');
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(session({ secret: 'cesium' }));
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use('/', require('./routes/index'));
+require('./routes/auth')(app, passport);
 
 app.use(function(req, res, next){
     var err = new Error('Not Found');
@@ -50,178 +60,29 @@ if(app.get('env') === 'development'){
     });
 }
 
+mongoose.connect('mongodb://localhost/cesium', { server: { auto_reconnect: true } });
+
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, "connection error:"));
+db.once('open', () => {
+    console.log("Connected database", db.name)
+    require('./models/User').find().exec(console.log);
+});
+
+function gracefulExit(){
+    mongoose.connection.close(() => {
+        console.log('Mongoose default connection with DB is disconnected through app termination');
+        process.exit(0);
+    });
+}
+
+process.on('SIGINT', gracefulExit).on('SIGTERM', gracefulExit);
+
 var server = http.createServer(app);
 var io = require('socket.io')(server);
 
-var User = require('./models/User');
-var Message = require('./models/messages/Message');
-var Command = require('./models/messages/Command');
-
-Function.prototype.and = function(other){
-    var that = this;
-    return function(){
-        return that.apply(null, arguments) && other.apply(null, arguments);
-    }
-}
-
-var Sockets = {
-    that: {
-        is: {
-            authorized: function(socket){
-                return socket.user && socket.user.nickname;
-            }
-        },
-        has: function(key, value){
-            return function(socket){
-                return socket.user[key] === value;
-            };
-        }
-    },
-    to: {
-        user: function(socket){
-            return socket.user;
-        }
-    },
-
-    get: function(room, namespace, filter, mapper){
-        var sockets = [];
-        namespace = io.of(namespace || '/');
-
-        if(namespace) for(var id in namespace.connected){
-            if(!room || namespace.connected[id].rooms.indexOf(room) >= 0){
-                var socket = namespace.connected[id];
-                if(!filter || filter.call(null, socket)) sockets.push(!mapper ? socket : mapper.call(null, socket));
-            }
-        }
-        return sockets;
-    },
-
-    getOnlineUsers: function(room, namespace){
-        return Sockets.get(room, namespace, Sockets.that.is.authorized, Sockets.to.user);
-    },
-    findOnlineUsersByNickname(nickname, room, namespace){
-        return Sockets.get(room, namespace, Sockets.that.is.authorized.and(Sockets.that.has('nickname', nickname)), Sockets.to.user);
-    }
-};
-
-var Commands = {
-    emit: function(command, what, response){
-        (command.socket || command.sender.socket).emit('command', {
-            what: what || command.name || null,
-            request: command.text || null,
-            response: response || null
-        });
-    },
-
-    client: {
-        online: function(command){
-            Commands.emit(command, 'online', Sockets.getOnlineUsers());
-        },
-        clear: function(command){
-            Commands.emit(command, 'clear');
-        }
-    },
-
-    server: {
-        alertPlaster: function(command, prohibitedPeriod){
-            Commands.emit(command, 'alert plaster', prohibitedPeriod);
-        }
-    }
-};
-
-io.on('connection', function(socket){
-    socket.on('login', function(data){
-        if(socket.user){
-            socket.emit('login', { success: true, done: true });
-            return;
-        }
-
-        if(!data.nickname || (data.nickname = data.nickname.trim()).length === 0){
-            socket.emit('login', {
-                success: false,
-                reason: "empty"
-            }); return;
-        }
-
-        if(data.nickname.length < 2){
-            socket.emit('login', {
-                success: false,
-                reason: 'too-short'
-            }); return;
-        }
-
-        if(data.nickname.length > 20){
-            socket.emit('login', {
-                success: false,
-                reason: 'too-long'
-            }); return;
-        }
-
-        if(!/^[A-Za-z0-9-_. ㄱ-ㅎㅏ-ㅣ가-힣]{2,20}$/.test(data.nickname)){
-            socket.emit('login', {
-                success: false,
-                reason: 'wrong-format'
-            }); return;
-        }
-
-        if(Sockets.findOnlineUsersByNickname(data.nickname).length > 0){
-            socket.emit('login', {
-                success: false,
-                reason: 'duplicate'
-            }); return;
-        }
-
-        socket.user = new User({ socket: socket, nickname: data.nickname });
-        socket.emit('login', { success: true, user: socket.user });
-        Commands.client.online(socket.user);
-
-        io.emit('user join', socket.user);
-    });
-
-    socket.on('message', function(data){
-        if(!socket.user) return;
-        data.sender = socket.user;
-
-        // 내용이 없는 경우 전송 안함
-        if(!data.text || (data.text = data.text.trim()).length === 0) return;
-
-        // TODO: 길이 제한을 없애고, 대신 처음엔 접혀 있다가 클릭해서 펼쳐 볼 수 있도록 변경
-        if(data.text.length > 1024) return;
-
-        // 도배 방지
-        var elapsedTime = Math.abs(Date.now() - ((socket.user.lastMessage && socket.user.lastMessage.date) || 0));
-        var limitInterval = Message.MIN_SENDING_INTERVAL + Message.PROHIBITION_PERIOD * socket.user.plasteredCount;
-
-        if(elapsedTime < limitInterval){
-            if(++socket.user.plasteredCount > 3){
-                Commands.server.alertPlaster(socket.user, Message.MIN_SENDING_INTERVAL + Message.PROHIBITION_PERIOD * socket.user.plasteredCount - elapsedTime);
-                return;
-            }
-        }else socket.user.plasteredCount = 0;
-
-        // 명령어 처리
-        if(data.text.startsWith('/')){
-            var command = socket.user.lastCommand = new Command(data);
-            switch(command.name.toLowerCase()){
-                case 'online':
-                    Commands.client.online(command);
-                    break;
-                case 'clear':
-                    Commands.client.clear(command);
-                    break;
-
-                default:
-                    Commands.emit(command, 'invalid');
-                    break;
-            }
-        }else io.emit('message', socket.user.lastMessage = new Message(data));
-    });
-
-    socket.on('disconnect', function(){
-        if(!socket.user) return;
-        socket.broadcast.emit('user left', socket.user);
-    });
-});
+require('./app/socket')(io);
+require('./app/passport')(passport);
 
 server.listen(app.get('port'), function(){
     console.log('Listening on port ' + app.get('port'));

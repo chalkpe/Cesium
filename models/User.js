@@ -15,30 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @param {Socket} params.socket
- * @param {string} params.nickname
- * @param {string} params.color
- */
-function User(params){
-    this.socket   = params.socket;
-    this.address  = params.socket.request.connection.remoteAddress;
-    this.nickname = params.nickname.trim();
-    this.color    = params.color || null;
+var mongoose = require('mongoose');
 
-    this.plasteredCount = 0;
-    this.lastMessage = null;
-    this.lastCommand = null;
-}
+var UserSchema = mongoose.Schema({
+    id: String, token: String,
+    username: String, displayName: String
+});
 
-User.prototype.toString = function(){
-    return '[object User]';
-};
-
-User.prototype.toJSON = function(){
-    return {
-        address: this.address, nickname: this.nickname, color: this.color
-    };
-}
-
-module.exports = User;
+module.exports = mongoose.model('User', UserSchema);

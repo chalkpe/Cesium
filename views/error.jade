@@ -1,11 +1,14 @@
 extends layout
 
 block content
+    nav.red.lighten-1
+        .nav-wrapper.container
+            a.brand-logo(href='/')
+                i.material-icons.left error
+                | #{(error.status ? (error.status + ' ') : '') + message}
+    
     .row
-        .col.s12.m6
-            .card.big.grey.darken-1
-                .card-content.white-text
-                    span.card-title= (error.status ? (error.status + ' ') : '') + message
-                    textarea.materialize-textarea= error.stack
-                .card-action
-                    a(href="/") Back to title
+    .row
+        .col.s12
+            .card-panel
+                pre= error.stack
