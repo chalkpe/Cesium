@@ -173,7 +173,7 @@ function scrollToBottom(){
 }
 
 $(function(){
-    $("#chatRoom").css('margin-bottom', ($("#messageBox").outerHeight() + 16) + "px");
+    $("#chatRoom").css('margin-bottom', ($("#messageBox").outerHeight() + 8) + "px");
     $("#messageInput").keydown(function(e){ if(e.keyCode === 13) $("#messageSendButton").click(); });
     $("#messageSendButton").click(sendMessage);
 });
