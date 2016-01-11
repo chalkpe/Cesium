@@ -144,8 +144,10 @@ function sendMessage(){
 
 // 챗방 메시지 목록에 메시지 축가
 function appendMessage(text, otherClasses){
-    var item = $('<li>').html(text).addClass("collection-item" + ((otherClasses && (' ' + otherClasses.join(' '))) || ''));
-    $("#chatRoom").append(item).find('.tooltipped').tooltip({ delay: 50 });
+    var item = $('<li>').html(text).addClass("collection-item" + ((otherClasses && (' ' + otherClasses.join(' '))) || ''))
+    item.find('.tooltipped').tooltip({ delay: 50 });
+
+    $("#chatRoom").append(item);
     if(hasScrolledToBottom) scrollToBottom();
 }
 
