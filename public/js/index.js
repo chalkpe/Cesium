@@ -182,7 +182,7 @@ function scrollToBottom(){
 }
 
 $(function(){
-    $(".dropdown-button").dropdown();
+    $(".dropdown-button").dropdown({ constrain_width: false, hover: true });
     $(".button-collapse").sideNav();
     $('.tooltipped').tooltip({ delay: 50 });
 
