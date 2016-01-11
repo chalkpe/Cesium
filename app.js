@@ -21,12 +21,9 @@ var express = require('express');
 var path = require('path');
 var logger = require('morgan');
 var favicon = require('serve-favicon');
+var session = require('express-session');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
-
-var mongoose = require('mongoose');
-var passport = require('passport');
-var session = require('express-session');
 
 var app = express();
 app.set('port', '671');
@@ -41,25 +38,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-app.use(session({ secret: 'cesium' }));
-app.use(passport.initialize());
-app.use(passport.session());
-
-app.use('/', require('./routes/index'));
-require('./routes/auth')(app, passport);
-
-app.use(function(req, res, next){
-    var err = new Error('Not Found');
-    err.status = 404; next(err);
-});
-
-if(app.get('env') === 'development'){
-    app.use(function(err, req, res, next){
-        res.status(err.status || 500);
-        res.render('error', { message: err.message, error: err });
-    });
-}
-
+var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/cesium', { server: { auto_reconnect: true } });
 
 var db = mongoose.connection;
@@ -78,11 +57,37 @@ function gracefulExit(){
 
 process.on('SIGINT', gracefulExit).on('SIGTERM', gracefulExit);
 
+var MongoStore = require('connect-mongo')(session);
+var mongoStore = new MongoStore({ mongooseConnection: mongoose.connection });
+app.use(session({ secret: 'cesium', key: 'cesium.sid', store: mongoStore }));
+
+var passport = require('passport');
+app.use(passport.initialize());
+app.use(passport.session());
+
 var server = http.createServer(app);
 var io = require('socket.io')(server);
 
+var passportSocketIo = require('passport.socketio');
+io.use(passportSocketIo.authorize({ cookieParser: cookieParser, secret: 'cesium', key: 'cesium.sid', store: mongoStore }));
+
 require('./app/socket')(io);
 require('./app/passport')(passport);
+
+app.use('/', require('./routes/index'));
+require('./routes/auth')(app, passport);
+
+app.use(function(req, res, next){
+    var err = new Error('Not Found');
+    err.status = 404; next(err);
+});
+
+if(app.get('env') === 'development'){
+    app.use(function(err, req, res, next){
+        res.status(err.status || 500);
+        res.render('error', { message: err.message, error: err });
+    });
+}
 
 server.listen(app.get('port'), function(){
     console.log('Listening on port ' + app.get('port'));
