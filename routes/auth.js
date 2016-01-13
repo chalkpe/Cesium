@@ -15,12 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+ function isAuthenticated(req, res, next){
+    if(req.isAuthenticated()) return next();
+    res.redirect('/');
+ }
+
 module.exports = function(app, passport){
     app.get('/auth/twitter', passport.authenticate('twitter'));
     app.get('/auth/twitter/callback', passport.authenticate('twitter', { successRedirect: '/', failureRedirect: '/' }));
-
-    function isLoggedIn(req, res, next){
-        if(req.isAuthenticated()) return next();
+    app.get('/logout', isAuthenticated, function(req, res){
+        req.logout();
         res.redirect('/');
-    }
+    });
 };

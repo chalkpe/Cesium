@@ -2,12 +2,30 @@ extends layout
 
 block themeColor
     - var themeColor = '#26a69a';
-
-mixin DropdownButton(name, id)
+    
+mixin NavItem(url, name)
+    li
+        a(href='/#{url}') #{name}
+        
+mixin NavItemWithIcon(url, name, iconClass, iconValue)
+    li
+        a(href='/#{url}')
+            i(class='#{iconClass}') #{iconValue}
+            | #{name}
+        
+mixin DropdownButton(id, name)
     li
         a.dropdown-button(href='#', data-activates='#{id}')
             | #{name}
             i.material-icons.right arrow_drop_down
+            
+mixin DropdownButtonWithIcon(id, name, iconClass, iconValue, hide)
+    li
+        a.dropdown-button(href='#', data-activates='#{id}')
+            i(class='#{iconClass}') #{iconValue}
+            | #{name}
+            if !hide
+                i.material-icons.right arrow_drop_down
 
 mixin DropdownContent(id, contents)
     ul.dropdown-content(id='#{id}')
@@ -27,13 +45,6 @@ mixin DropdownContentAdvanced(id, contents, suffix)
             +NavItem(content[0], content[1])
             +NavItem(content[0] + suffix[0], content[1] + suffix[1])
 
-mixin NavDropdownButtons(buttons)
-    ul.right.hide-on-med-and-down
-        each button in buttons
-            +DropdownButton(button[0], button[1])
-    ul.side-nav#mobile-side-nav
-        each button in buttons
-            +DropdownButton(button[0], button[1] + '-mobile')
 
 mixin NavItems(items)
     ul.right.hide-on-med-and-down
@@ -43,14 +54,9 @@ mixin NavItems(items)
         each item in items
             +NavItem(item[0], item[1])
 
-
-mixin NavItem(url, name)
-    li
-        a(href='/#{url}') #{name}
-
 block stylesheets
     link(rel='stylesheet', href='/css/index.css')
-waves-effect waves-light btn
+    
 block content
     if req.isAuthenticated()
         include ./includes/dropdown-contents
@@ -64,7 +70,10 @@ block content
                 if req.isAuthenticated()
                     include ./includes/dropdown-buttons
                 else
-                    +NavItems([['auth/twitter', "Sign in with Twitter"]])
+                    ul.right.hide-on-med-and-down
+                        +NavItem('auth/twitter', "Sign in with Twitter")
+                    ul.side-nav#mobile-side-nav
+                        +NavItem('auth/twitter', "Sign in with Twitter")
 
     if req.isAuthenticated()
         include ./includes/chat-room

@@ -1,3 +1,15 @@
-+NavDropdownButtons([
-    ["일반", 'ss'], ["직군", 'w'], ["프로젝트", 'p'], ["관심사", 'h']
-])
+ul.right.hide-on-med-and-down
+    +DropdownButtonWithIcon('ss', "", 'mdi mdi-radioactive', '', true)
+    +DropdownButtonWithIcon('w',  "", 'material-icons', 'work', true)
+    +DropdownButtonWithIcon('p', "", 'material-icons', 'supervisor_account', true)
+    +DropdownButtonWithIcon('h', "", 'material-icons', 'star', true)
+    +NavItemWithIcon('logout', '', 'mdi mdi-logout', '')
+    +NavItemWithIcon('settings', '', 'material-icons', 'settings')
+    
+ul.side-nav#mobile-side-nav
+    +DropdownButton('ss-mobile', "일반")
+    +DropdownButton('w-mobile', "직군")
+    +DropdownButton('p-mobile', "프로젝트")
+    +DropdownButton('h-mobile', "관심사")
+    +NavItem('settings', '옵션 및 설정')
+    +NavItem('logout', '로그아웃')
