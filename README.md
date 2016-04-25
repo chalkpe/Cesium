@@ -4,7 +4,7 @@ Node.js powered chatting server
 ## How to run
 ```bash
 $ git clone https://github.com/ChalkPE/Cesium.git
-$ cd Cesium && npm istall && npm start
+$ cd Cesium && npm install && npm start
 ```
 
 ## License
