@@ -18,7 +18,7 @@
     "express": "^4.13.3",
     "express-session": "^1.13.0",
     "jade": "^1.11.0",
-    "mongoose": "^4.3.5",
+    "mongoose": "^5.7.5",
     "morgan": "^1.6.1",
     "passport": "^0.3.2",
     "passport-twitter": "^1.0.3",
